@@ -1,0 +1,118 @@
+---
+title: "Statistical Inference Project - Part1"
+author: "A. Swarup"
+date: "May 19, 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
+                      fig.align = "center", fig.width = 7.25, fig.height = 6)
+```
+
+## Overview
+
+This is the first part of the Coursera Statistical Inference Course project. Here we'd investigate the exponential distribution in R and compare it with the Central Limit Theorem. Using R function "rexp" we'd perform 1000 simulations of exponential distributions of 40 random values. We'd compare the mean and variance of the simulated exponential distribution to the theoretical mean and distribution and demonstrate that the distribution is approximately normal.
+
+## Simulations
+
+The mathematical formula for exponential distribution is:
+
+$$f(x;\lambda) = \lambda e^{\lambda x}\ with\ mean = \frac{1}{\lambda}\ and\ variance = \frac{1}{\lambda^2}$$
+
+
+In R we can generate exponentially distributed random variables by using the function rexp(n,lambda) where lambda ($\lambda$) is the rate parameter. Our code for simulations is as follows. Please see the associated comments for explanations.
+
+```{r simulate, message=FALSE, warning=FALSE}
+n <- 40 # no. of exponentials
+lambda <- 0.2 # rate parameter lambda = 0.2
+set.seed(123) # Set seed to get repeatable random numbers
+simulations <- 1000 # no. of simulations
+SimulatedData <- replicate(simulations, rexp(n, lambda))
+```
+The SimulatedData is a  n (=40) x 1000 (no. of simulations) matrix.
+
+## Analysis
+
+### 1. Sample Mean versus Theoretical Mean
+
+The code to calculate mean of simulated data and the theoretical mean follows.
+```{r means, message=FALSE, warning=FALSE}
+# Mean of the simulated data
+meanExponential <- colMeans(SimulatedData)
+# head(meanExponential)
+meanOfSimulationMeans <- mean(meanExponential); meanOfSimulationMeans
+# Theoretical mean
+mu <- 1/lambda; mu
+```
+We see that simulations mean 5.01 is very close to the theoretical mean of 5.
+
+Figure 1 in Appendix shows a histogram of the simulated means.
+
+### 2. Sample Variance versus Theoretical Variance
+R code to get standard variation and variance of simulated data and their theoretical values is as follow.
+
+```{r sd_&_variance, message=FALSE, warning=FALSE}
+# Simulations standard deviation and variance
+sd_Sim <- sd(meanExponential); sd_Sim
+var_Sim <- var(meanExponential); var_Sim
+# Theoretical standard deviation and variance
+sd <- (1/lambda)/sqrt(n); sd
+Var <- sd^2; Var
+```
+We see here that the standard deviations are very close (.775 versus .790). Variance being the square of standard deviation, minor differences become much larger. Still, the simulations variance of .600 is close to the theoretical variance of .625.
+
+### 3. Comparison to Normal Distribution
+
+We plot the histogram again (with 40 breaks instead of 20 that were taken in Figure 1) and overlay it with the theoretical normal distribution line - please see Figure 2 in the Appendix. Figure 2 shows that the simulated exponential distribution closely matches a Normal Distribution.
+
+### 4. Confidence Intervals Comparison
+
+We have already seen that the mean and variance of the sample data is close to that of a normal distribution. We now look at the confidence intervals for the two cases.
+
+```{r conf_intervals, message=FALSE, warning=FALSE}
+sample_confinterval <- round (mean(meanExponential) + c(-1,1)*1.96*sd_Sim/sqrt(n),3)
+sample_confinterval
+theo_confinterval <- mu + c(-1,1)* 1.96*sqrt(Var)/sqrt(n)
+theo_confinterval
+```
+
+The sample confidence interval is (4.772, 5.252). It closely matches the theoretical confidence level (4.755, 5.245), again confirming that the distribution is approximately normal.
+
+We can now plot the Q-Q for quantiles to show that the sample quantiles match the theoretical quantiles. This plot shown as Figure 3 in the Appendix also suggests normality.
+
+## Conclusion
+
+We have demonstrated that the distribution of means of 40 exponential distributions is close to the normal distribution with the expected theoretical values based on the given value of lambda ($\lambda$=0.2).  
+
+# APPENDIX  
+      
+```{r histogram, echo=FALSE, }
+hist(meanExponential, breaks = 20, xlab = "Mean", col ="cyan", 
+     main = "Figure 1. Histogram of 1000 Simulated Exponential Means")
+abline(v = meanOfSimulationMeans, col = "red")
+```    
+
+\pagebreak  
+   
+## Code to overlay normal distribution curve on the histogram of simulated data
+
+```{r histogram_with_normal, message=FALSE, warning=FALSE}
+# Plot histogram 
+hist(meanExponential, breaks = 40, xlab = "Mean", col = "beige",
+     main = "Figure 2. Comparison to a Normal Distribution") 
+# Add the theoretical Normal Distribution line
+xfit <- seq(min(meanExponential), max(meanExponential), length = 100)
+yfit <- dnorm(xfit, mean = 1/lambda, sd = 1/lambda/sqrt(n))
+lines(xfit, yfit*100, lty=2)
+```   
+   
+\newpage   
+## Q-Q Plot Code
+
+```{r q-q_plot, message=FALSE, warning=FALSE}
+qqnorm(meanExponential, main="Figure 3. Normal Q-Q Plot", 
+       xlab="Theoretical Quantiles", 
+       ylab="Sample Quantiles")
+qqline(meanExponential, col="red")
+```
